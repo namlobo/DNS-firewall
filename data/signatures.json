@@ -1,0 +1,23 @@
+[
+    {
+      "pattern": ".*malware.*",
+      "description": "Contains the word 'malware'"
+    },
+    {
+      "pattern": ".*c2server.*",
+      "description": "Potential Command & Control (C2) server"
+    },
+    {
+      "pattern": ".*x[0-9a-f]{8,}.*",
+      "description": "Obfuscated or encoded content"
+    },
+    {
+      "pattern": ".*\\.tk$",
+      "description": "Suspicious TLD (.tk)"
+    },
+    {
+      "pattern": "[0-9]{5,}\\.[a-z]{5,}",
+      "description": "Number-letter domain mix"
+    }
+  ]
+  
