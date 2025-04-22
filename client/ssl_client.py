@@ -1,16 +1,38 @@
-# client/ssl_client.py
-import socket, ssl
+import socket
+import ssl
 
 context = ssl.create_default_context()
 context.check_hostname = False
-context.verify_mode = ssl.CERT_NONE  # Allow self-signed
+context.verify_mode = ssl.CERT_NONE
 
-SERVER_IP = "192.168.79.186"  # 🔁 Change this to your firewall server's IP
+SERVER_IP = "10.74.27.3"  # replace with correct IP
+SERVER_PORT = 8443
 
-with socket.create_connection((SERVER_IP, 8443)) as sock:
-    with context.wrap_socket(sock, server_hostname="firewall.local") as ssock:
-        print("[SSL CLIENT] Connected to server.")
-        command = input("Enter control command (e.g., 'GET_LOGS'): ")
-        ssock.send(command.encode())
-        response = ssock.recv(1024)
-        print("[SSL CLIENT] Response:", response.decode())
+try:
+    with socket.create_connection((SERVER_IP, SERVER_PORT)) as sock:
+        with context.wrap_socket(sock, server_hostname="firewall.local") as ssock:
+            print("[SSL CLIENT] Connected to server.")
+
+            while True:
+                command = input("Enter control command (e.g., 'GET_LOGS', 'BLOCK_DOMAIN example.com', or 'exit'): ").strip()
+
+                if command.lower() == "exit":
+                    print("[SSL CLIENT] Exiting.")
+                    break
+
+                if not command:
+                    print("[SSL CLIENT] Please enter a valid command.")
+                    continue
+
+                ssock.send(command.encode())
+                response = ssock.recv(8192)
+
+                try:
+                    decoded = response.decode().strip()
+                    print("[SSL CLIENT] Response:\n", decoded)
+                except UnicodeDecodeError:
+                    print("[SSL CLIENT] Failed to decode response from server.")
+
+except Exception as e:
+    print(f"[SSL CLIENT] Connection error: {e}")
+
