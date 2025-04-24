@@ -2,7 +2,7 @@ import socket
 import struct
 import sys
 
-DNS_SERVER = "10.74.27.3"  # replace with your actual server IP
+DNS_SERVER = "192.168.79.2"  # replace with your actual server IP
 PORT = 53
 
 def build_query(domain):
