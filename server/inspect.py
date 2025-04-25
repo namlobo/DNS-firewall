@@ -1,11 +1,13 @@
-import json
+import math
 import os
 import re
+import json
 
+# Load signature patterns from file
 def load_signatures():
     file_path = os.path.join(os.path.dirname(__file__), "data", "signatures.json")
     with open(file_path, "r") as f:
-    	return json.load(f)
+        return json.load(f)
 
 SIGNATURES = load_signatures()
 
@@ -13,9 +15,10 @@ def check_sig(domain):
     for sig in SIGNATURES:
         pattern = sig.get("pattern", "")
         desc = sig.get("description", "No description")
-        if re.search(pattern, domain):
+        if re.search(pattern, domain, re.IGNORECASE):
             return True, f"[SIGNATURE] {desc}"
     return False, None
+
 def shannon_entropy(s):
     if not s:
         return 0
@@ -24,9 +27,11 @@ def shannon_entropy(s):
 
 def check_heuristics(domain):
     parts = domain.split(".")
+
+    # Check for excessive subdomains or long labels
     if any(len(part) > 25 for part in parts):
         return True, "[HEURISTIC] Long subdomain part"
-   if len(parts) > 6:
+    if len(parts) > 6:
         return True, "[HEURISTIC] Excessive subdomains"
 
     # Interleaved letters & digits (e.g., jdk3noolehi3)
@@ -59,7 +64,10 @@ def inspect_domain(domain):
     sig_match, sig_reason = check_sig(domain)
     if sig_match:
         return True, sig_reason
+
     heur_match, heur_reason = check_heuristics(domain)
     if heur_match:
         return True, heur_reason
+
     return False, "domain appears safe"
+
