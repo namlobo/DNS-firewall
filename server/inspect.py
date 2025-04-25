@@ -16,15 +16,43 @@ def check_sig(domain):
         if re.search(pattern, domain):
             return True, f"[SIGNATURE] {desc}"
     return False, None
+def shannon_entropy(s):
+    if not s:
+        return 0
+    probs = [float(s.count(c)) / len(s) for c in set(s)]
+    return -sum(p * math.log2(p) for p in probs)
 
 def check_heuristics(domain):
     parts = domain.split(".")
     if any(len(part) > 25 for part in parts):
         return True, "[HEURISTIC] Long subdomain part"
-    if len(parts) > 6:
+   if len(parts) > 6:
         return True, "[HEURISTIC] Excessive subdomains"
-    if re.search(r"[a-z]{4,}[0-9]{4,}", domain) or re.search(r"[0-9]{4,}[a-z]{4,}", domain):
-        return True, "[HEURISTIC] Random mix of letters and numbers"
+
+    # Interleaved letters & digits (e.g., jdk3noolehi3)
+    if re.search(r"[a-z]{2,}[0-9]{2,}[a-z0-9]*[0-9]{2,}", domain, re.IGNORECASE):
+        return True, "[HEURISTIC] Interleaved letters and numbers"
+
+    # Repeating patterns like ababab, xyzxyz
+    if re.search(r"([a-z0-9]{3,})\1", domain, re.IGNORECASE):
+        return True, "[HEURISTIC] Repeating pattern"
+
+    # High entropy
+    name_only = "".join(parts[:-1])
+    entropy = shannon_entropy(name_only.lower())
+    if entropy > 3.8:
+        return True, f"[HEURISTIC] High entropy ({entropy:.2f})"
+
+    # Low vowel-to-consonant ratio
+    vowels = sum(1 for c in domain if c in "aeiou")
+    consonants = sum(1 for c in domain if c.isalpha() and c not in "aeiou")
+    if consonants > 8 and (vowels / (consonants + 1)) < 0.2:
+        return True, "[HEURISTIC] Low vowel-consonant ratio"
+
+    # Consecutive consonants (e.g., "jdkrtxv")
+    if re.search(r"[bcdfghjklmnpqrstvwxyz]{5,}", domain, re.IGNORECASE):
+        return True, "[HEURISTIC] Long consonant run"
+
     return False, None
 
 def inspect_domain(domain):
